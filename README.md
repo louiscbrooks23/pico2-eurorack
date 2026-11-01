@@ -38,6 +38,12 @@ Further hardware information is available in [`hardware/README.md`](hardware/REA
 
 Firmware and documentation were developed with the assistance of Claude (Anthropic). The hardware design is by Louis Brooks.
 
+## Status and to-do
+- The hardware has been fully tested using the code in this repository.
+- To do: upload a demo video/audio of the board running.
+- I ordered the PCBs from JLCPCB for around $20 and the parts from LCSC for around $40. I hand soldered all components, which took several hours. Some components, like the ferrite beads (0603) and small pitch ICs (such as the PCM3060 in TSSOP-28 package and the MCP4728 in MSOP-10 package), may be difficult to hand solder without a hotplate or hot air rework station.
+- When designing the PCBs I did not optimise for PCBA. In a future iteration of the design I will optimise for JLCPCB PCBA.
+
 ## Licence and credits
 
 Copyright (C) 2026 Louis Brooks.
