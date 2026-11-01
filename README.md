@@ -1,7 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- Copyright (C) 2026 Louis Brooks -->
 
-# pico2-eurorack hardware
+# pico2-eurorack
+
+![DSP board](hardware/images/3d_view_front.png)
 
 This repository provides hardware designs for a Raspberry Pi Pico 2 Eurorack development board.
 
@@ -40,7 +42,7 @@ Firmware and documentation were developed with the assistance of Claude (Anthrop
 
 Copyright (C) 2026 Louis Brooks.
 
-The software files in this repository (`multi-dsp/`, and the files in the repository root) are released under the **GNU General Public License, version 3 or (at your option) any later version** (`GPL-3.0-or-later`). The full text is in [`LICENSE`](LICENSE).
+The software files in this repository (`multi-dsp/`, and the files in the repository root) are released under the **GNU General Public License, version 3** . The full text is in [`LICENSE`](LICENSE).
 
 The hardware files in this repository (`hardware/`: schematic, PCB, BOM, placement files and the hardware documentation) are released under the **CERN Open Hardware Licence Version 2 - Strongly Reciprocal** (`CERN-OHL-S-2.0`). The standard notice, including the requirement to keep the source location with any product you make from this design, is in [`hardware/README.md`](hardware/README.md#15-licence-and-credits).
 
