@@ -2,7 +2,13 @@
 
 Firmware projects developed for the **pico2-eurorack** development board: an RP2350 (Raspberry Pi Pico 2 class) based Eurorack-style audio and CV platform.
 
-Each folder in this directory is a self-contained project with its own `README.md`, build files and tests.
+This repository has two kinds of folder: the **hardware** design files for the board itself, and self-contained **firmware projects** that run on it, each with its own `README.md`, build files and tests.
+
+## Hardware
+
+| Folder | Description |
+|---|---|
+| [`hardware/`](hardware/) | Schematic, PCB and assembly files for the two-board development board (DSP board and control board, revision V0.2), with pinouts, power, analog signal paths and a bring-up checklist. Start with [`hardware/README.md`](hardware/README.md). |
 
 ## Projects
 
@@ -18,7 +24,7 @@ Each folder in this directory is a self-contained project with its own `README.m
 * MCP3208 8-channel ADC for CV inputs and pots, plus the RP2350's own ADC channels
 * SSD1306-style 128×64 OLED, rotary encoder with push switch, and two buttons
 
-Pin maps and the exact clocking are documented in each project's README (see [`multi-dsp/README.md`](multi-dsp/README.md), section 3).
+The full hardware description (schematic, pin map, analog stages, power) is in [`hardware/README.md`](hardware/README.md). Each firmware project's README documents the clocking and pin usage its code relies on (see [`multi-dsp/README.md`](multi-dsp/README.md), section 3).
 
 ## Getting started
 
@@ -33,3 +39,4 @@ This repository is free software, released under the **GNU General Public Licens
 Third-party components used at build time (the Raspberry Pi Pico SDK and what it pulls in) keep their own licences; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 Contributions are welcome. By submitting a contribution you agree that it is licensed under the same terms (`GPL-3.0-or-later`).
+

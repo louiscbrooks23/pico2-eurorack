@@ -1,0 +1,14 @@
+Designators,Qty,Value,Footprint,MPN,Manufacturer,LCSC,Function
+"AudioIn,AudioOut,CVInAB,CVInCD,CVOutAB,CVOutCD,ENC1,GPIO,Power1,SW,Wiper3",11,1x4 male header 2.54 mm,HDR-TH_4P-P2.54-V-M-1,2.54-1*4,ZHOURI,C5116483,Mates with DSP board
+"AudioInL,AudioInR,AudioOutL,AudioOutR,CVInA,CVInB,CVInC,CVInD,CVOutA,CVOutB,CVOutC,CVOutD,GateA,GateB",14,3.5 mm mono jack,CONN-TH_WQP-WQP518MA,WQP-WQP518MA,,C53058333,Front-panel jacks
+"C1,C2,C39",3,100nF,C0805,TCC0805X7R104K500DT,CCTC,C282732,"3v_REF decoupling (C1,C2), OLED supply (C39)"
+"D9,D11",2,BAT54S dual Schottky,SOT-23-3,BAT54S,R+O,C7420333,Gate input clamps
+ENC,1,rotary encoder with switch,SW-TH_5P-L12.5-W13.4-P2.50-LS14.5,PEC11R-4215F-S0024,Bourns,C143790,Menu encoder
+"Gate,OLED_H,Wiper1,Wiper2",4,1x6 male header 2.54 mm,HDR-TH_6P-P2.54-V-M,2.54-1*6,ZHOURI,C5156615,Mates with DSP board
+GPIO-F,1,1x4 header (panel side),CONN-TH_4P-P2.54_TOPONELEC_TY308-2.54-04P-14-00AH,TY308-2.54-04P-14-00AH,Toponelec,C2840318,GPIO8/GPIO9/GPIO15/GND breakout
+OLED,1,0.96 in 128x64 OLED module,OLED-TH_L27.8-W27.2-P2.54,HS96L03W2C03,HS,C5248080,Display
+"R3,R4",2,47k,R0805,AC0805FR-0747KL,Yageo,C144558,Gate input pull-downs
+"R61,R63",2,10k,R0805,0805W8F1002T5E,UNI-ROYAL,C17414,Gate input series resistors
+"R70,R71",2,4.7k,R0805,RMC08054.7K1%N,Tyohm,C269746,I2C1 pull-ups
+"SW0,SW1",2,tact switch,SW-SMD_4P-L6.0-W6.0-P4.50-LS9.0_H5.0,KH-6X6X5H-STM,kinghelm,C2837531,Select / Edit buttons
+"WIPER0,WIPER1,WIPER2,WIPER3,WIPER4,WIPER5,WIPER6",7,10k potentiometer,RES-ADJ-TH_RK09L1140A5P,RK09L114001T,Alps Alpine,C470463,Panel pots
