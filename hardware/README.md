@@ -644,8 +644,5 @@ Counts from the CPL files **(C)**:
 
 ## 15. Licence and credits
 
-Copyright (C) 2026 Louis Brooks.
-
-The hardware files in this folder are released under the same terms as the rest of the repository: the **GNU General Public License, version 3 or (at your option) any later version** (`GPL-3.0-or-later`); see [`../LICENSE`](../LICENSE). The GPL was written for software; if you want a licence designed for hardware designs, the CERN Open Hardware Licence family is the usual alternative, and the change would be made here and in the repository README.
-
-Schematic and PCB drawn by Louis Brooks in EasyEDA. The PCM3060 figures quoted above were checked against the TI PCM3060 datasheet.
+Copyright (C) 2026 Louis Brooks. 
+This source describes Open Hardware and is licensed under the CERN-OHL-S v2. You may redistribute and modify this source and make products using it under the terms of the CERN-OHL-S v2. This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A PARTICULAR PURPOSE. Source location: https://github.com/louiscbrooks23/pico2-eurorack.

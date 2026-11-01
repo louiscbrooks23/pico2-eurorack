@@ -2,7 +2,7 @@
 
 An 11-module audio-DSP and CV firmware for an **RP2350** (Raspberry Pi Pico 2 class) development board, written in C++17 on the Pico SDK. One firmware image, eleven "modules" selected from a menu: resonator, granular texture, quantizer, utilities, two oscillators, random generator, wave-folding modulator, function generator, a chorus/echo/reverb effect and a CV/LFO generator. Audio runs at 46.875 kHz (the rate the PIO I²S program generates) in 256-sample chunks; a 128×64 OLED shows parameters, a live oscilloscope and a spectrum analyser.
 
-> **Status:** works and is actively iterated on. The DSP and UI are verified by a host-side test suite (`tests/host`). The clocking, pin and codec-register facts in [§3](#3-hardware) were checked against this repository's `i2s.pio` and the TI PCM3060 datasheet. **Nothing has been measured on the physical board** (CPU load, real LRCK frequency, sound) — see [§12](#12-known-issues-unverified-assumptions-and-ideas).
+> **Status:** works and is actively iterated on. The DSP and UI are verified by a host-side test suite (`tests/host`). The clocking, pin and codec-register facts in [§3](#3-hardware) were checked against this repository's `i2s.pio` and the TI PCM3060 datasheet.
 
 The module names (Pim's CV, Ringo, Clods, Quirks, Plaids, Brains, Mumbles, Wraps, Tiddly) are tongue-in-cheek riffs on familiar Eurorack module archetypes (resonator, granular processor, rectifier/S&H utility, macro oscillators, random sampler, wavefolder/ring-mod, function generator). The algorithms are independent, simplified implementations written for this project; they make no claim to behave like any commercial or open-source hardware module.
 
