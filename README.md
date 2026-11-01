@@ -34,7 +34,7 @@ Further hardware information is available in [`hardware/README.md`](hardware/REA
 | Folder | Contents | Licence |
 |---|---|---|
 | [`hardware/`](hardware/) | Schematic, PCB, BOM and assembly files for the DSP board and control board (V0.2), and the hardware documentation | CERN-OHL-S-2.0 |
-| [`multi-dsp/`](multi-dsp/) | MULTI-DSP firmware for the board (C++17, Pico SDK) with host-side tests | GPL-3.0-or-later |
+| [`code/multi-dsp/`](code/multi-dsp/) | MULTI-DSP firmware for the board (C++17, Pico SDK) with host-side tests | GPL-3.0-or-later |
 
 Firmware and documentation were developed with the assistance of Claude (Anthropic). The hardware design is by Louis Brooks.
 
@@ -48,7 +48,7 @@ Firmware and documentation were developed with the assistance of Claude (Anthrop
 
 Copyright (C) 2026 Louis Brooks.
 
-The software files in this repository (`multi-dsp/`, and the files in the repository root) are released under the **GNU General Public License, version 3** . The full text is in [`LICENSE`](LICENSE).
+The software files in this repository (`code/`, and the files in the repository root) are released under the **GNU General Public License, version 3**. The full text is in [`LICENSE`](LICENSE).
 
 The hardware files in this repository (`hardware/`: schematic, PCB, BOM, placement files and the hardware documentation) are released under the **CERN Open Hardware Licence Version 2 - Strongly Reciprocal** (`CERN-OHL-S-2.0`). The standard notice, including the requirement to keep the source location with any product you make from this design, is in [`hardware/README.md`](hardware/README.md#15-licence-and-credits).
 

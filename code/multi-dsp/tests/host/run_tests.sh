@@ -10,7 +10,7 @@ cd "$(dirname "$0")"
 OUT=build; mkdir -p "$OUT"
 CXX=${CXX:-g++}
 FLAGS="-std=gnu++17 -O2 -w -Istubs -Istubs/pico"
-for t in test_cpu_stats test_ringo test_quirks test_encoder test_knobs; do
+for t in test_cpu_stats test_ringo test_quirks test_encoder test_knobs test_cvmap; do
   echo "=== $t ==="
   $CXX $FLAGS $t.cpp -o "$OUT/$t"
   "$OUT/$t"
