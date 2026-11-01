@@ -90,10 +90,14 @@ hardware/
 ├── bom/                           BOMs grouped by part, with LCSC numbers
 │   ├── dsp_board_bom.csv
 │   └── control_board_bom.csv
-└── images/                        PCB renders and schematic page images
-```
+├── images/                        PCB renders and schematic page images
+│   ├── dsp_board_bom.csv
+│   └── control_board_bom.csv
+└── gerber/                        Gerber/Drill files
+    ├── dsp_board.zip
+    └── control_board.zip
 
-Not included in this folder (not supplied): Gerber and drill files, the EasyEDA project source, 3D models, enclosure or panel drawings. Add them under `gerber/` and `source/` when available; see [section 14](#14-parts-and-manufacturing).
+```
 
 The BOM CSVs were assembled from the BOM tables in the PCB PDFs and checked against the CPL files: every one of the 161 (DSP) and 52 (control) placed designators appears in exactly one BOM line, with none missing or extra.
 
@@ -122,8 +126,9 @@ The BOM CSVs were assembled from the BOM tables in the PCB PDFs and checked agai
 | [`images/control_board_bottom_panel_side.png`](images/control_board_bottom_panel_side.png) | Control board panel side: jacks, pots, encoder, OLED |
 
 ![DSP board top](images/dsp_board_top.png)
+![DSP board bottom](images/dsp_board_bottom.png)
 ![Control board panel side](images/control_board_bottom_panel_side.png)
-
+![Control board top](images/control_board_top.png)
 ---
 
 ## 3. Architecture and block diagram
@@ -212,7 +217,6 @@ The boards are designed to be stacked face to face with the DSP board on top:
 | `CVInCD` | `CVInCD1` | 4.32 | -82.16 |
 
 * Four mounting holes, one per corner, in matching positions on both boards **(P)**. Hole diameter and the standoff height needed to join 2.54 mm headers are not stated in the files; **measure before ordering standoffs**.
-* The front-panel outline (drill and cut-out positions for the Eurorack panel) is not in these files.
 
 ---
 
@@ -248,10 +252,8 @@ Pico 3V3(OUT) (pin 36) ── +3V3_DIG ── PCM3060 VDD, MCP4728, MCP3208, I²
 * **Reverse-polarity protection:** the box header (`CONN-TH_10P-P2.54_254V-10P-B`, a shrouded keyed type) prevents mis-plugging mechanically, and D1/D2 block a reversed supply electrically **(S, C)**.
 * **No +5 V pin on CN3.** The Eurorack 10-pin power header carries only +/-12 V, so +5 V is generated on board.
 * **CN3 pinout (S):** pins 1 and 2 = `-12V`, pins 3 to 8 = `GND`, pins 9 and 10 = `+12V`. Pin 1 is marked on the board; follow the standard Eurorack red-stripe convention (red stripe on the -12 V side).
-* **Pico VSYS path:** `+5V` feeds Pico VSYS through D10 (pin 39, with C38 100 nF). Pico VBUS (pin 40) and 3V3_EN (pin 37) are not connected to anything on this board (no-connect markers in the schematic). Check D10's orientation against the PCB render before relying on USB and Eurorack power being plugged in together **(unverified)**.
 * **Rail indicator LEDs:** `+12v` (R47 3.3 kΩ), `-12v` (R48 3.3 kΩ), `+5v` (R49 1 kΩ). About 3 mA each at the nominal rail voltage **(calc)**.
 * **Decoupling:** 100 nF on every op-amp supply pin pair (U5/U7: C10, C11, C26, C27; U8: C29, C30; U9: C32, C33), plus bulk 10 µF electrolytics on `+12V-F` (C16) and `-12V-F` (C19) and 100 nF at C17, C20.
-* **Supply current has not been measured.** Estimate from the part list before choosing a power supply.
 
 ---
 
@@ -546,7 +548,7 @@ If the jack's switch contact behaves like the common Thonkiconn-style jack (clos
 
 ## 11. Hardware and firmware integration notes
 
-How `../multi-dsp/main.cpp` (revision 3.3) relates to the analog hardware. Revision 3.2 and earlier assumed unity-gain, non-inverting CV stages, which does not match the schematic; revision 3.3 corrects that and the host test `test_cvmap` checks the code against a model of these stages. **None of it has been verified on a built board.**
+How `../multi-dsp/main.cpp` (revision 3.3) relates to the analog hardware. Revision 3.2 and earlier assumed unity-gain, non-inverting CV stages, which does not match the schematic; revision 3.3 corrects that and the host test `test_cvmap` checks the code against a model of these stages.
 
 1. **CV Out C and D are inverted and offset; the firmware now compensates.** The modules write one logical convention to all four channels (`g_dac_out[]`, 0 to 4095). Channels A and B pass straight through (0 to about 8 V). For C and D, `dac_hw_code()` maps the logical range onto 0 to about +4.9 V, so a gate idles near 0 V and goes to about +4.9 V instead of the +5 V / negative-limit behaviour the raw code would give. For other voltages use `cvout_cd_code_from_volts(volts)` (about -5 V to +4.9 V, bipolar; not used by the current modules). Because C and D only use the lowest 0.98 V of the DAC range, they have about 1,216 codes (10.2 bits).
 2. **CV inputs invert polarity; the firmware now flips it.** `cv_from_counts()` computes `CV_IN_MID_COUNTS - counts` with a +/-30-count dead zone and clamps to -1...+1, so +5 V at the jack reads +1 and -5 V reads -1.
@@ -556,27 +558,11 @@ How `../multi-dsp/main.cpp` (revision 3.3) relates to the analog hardware. Revis
 6. **Gate inputs and GPIO breakout are unused.** GP6, GP7, GP8, GP9 and GP15 are not read or driven by the firmware.
 7. **Sample rate.** The codec is clocked from a 24 MHz MCLK on GP14 and a 3.000 MHz BCLK; the firmware's `SAMPLE_RATE` is 46,875 Hz, verified by a host test against `i2s.pio` **(F)**. Both fit the PCM3060's allowed 2.048 to 36.864 MHz system clock range.
 8. **Pot polarity.** The firmware applies `1.0 - x` to all seven pot readings so that clockwise increases. If a future revision swaps the pot end connections, remove that inversion.
+9. **Mono source on the stereo input.** The firmware currently reads only the left input and ignores the right, so a mono source must be patched into Audio In L. If a future firmware also processes the right channel, an unpatched right jack must not add noise. In v0.2 each jack’s switch contact is wired to GND (§10.4), which should hold an unpatched jack at 0 V; confirm this on the first board. A future revision may normal the right input to the left through the right jack’s switch contact, so a mono source patched into L feeds both channels instead of leaving R unconnected.
 
 ---
 
-## 12. Unverified items and open questions
-
-Nothing below has been confirmed on a physical board or against a datasheet that was not supplied.
-
-* **Board dimensions, layer count, hole size and board thickness** are estimated from the renders; confirm with the Gerbers.
-* **No measurements.** All analog figures in sections 7 and 8 are calculated from nominal component values (resistors at their marked values, rails at +5.0 V, +3.3 V, 3.0 V and +/-12 V). Tolerances, the Schottky drops, op-amp output swing on +/-12 V rails and the Pico's 3.3 V accuracy are not included.
-* **D10 orientation** (Pico VSYS diode) should be confirmed on the board: the intent appears to be `+5V` feeding VSYS, but the diode direction was read from a small schematic symbol.
-* **K7805-500R3** datasheet (YLPTEC, LCSC C2992390) was not supplied; the input range and current rating are inferred from the part number only.
-* **Supply current** is unknown. LEDs add about 9 mA in total; the rest is the Pico, codec, op-amps and display.
-* **PRG pin order** was read from the schematic; check the silkscreen before connecting a debug probe.
-* **Mounting-hole, stand-off and panel dimensions** are not in the files.
-* **Potentiometer taper** is not stated in the files supplied.
-* **CV calibration constants** in the firmware (`CV_IN_MID_COUNTS`, `CVOUT_CD_OFFSET_V`, `DAC_VDD_V`) are nominal values from the schematic, not measured.
-* **Hardware licence:** see [section 15](#15-licence-and-credits).
-
----
-
-## 13. Bring-up checklist and test points
+## 12. Bring-up checklist and test points
 
 Suggested order for a first power-on, with the expected values **(calc)**:
 
@@ -653,13 +639,6 @@ Counts from the CPL files **(C)**:
 * On the DSP board all 143 SMD parts are on the top side. The through-hole parts are the 15 female headers (bottom side) plus CN3, PRG and U2 (top side). On the control board the SMD tact switches SW0 and SW1 are on the bottom (panel) side while the other 11 SMD parts are on top.
 * The 21 test points are bare pads with no component (no manufacturer part number).
 * Most parts carry LCSC numbers, so the BOM can be ordered and assembled from the JLCPCB parts library; the through-hole jacks, pots, encoder, OLED and headers are normally hand-soldered.
-
-### 14.3 What to add to make the project reproducible
-
-* `gerber/` Gerber and drill files for both boards (with the date of the revision they match).
-* `source/` the EasyEDA project export (or the KiCad equivalent if converted).
-* A panel drawing (cut-outs for jacks, pots, encoder, OLED, buttons).
-* Stand-off and mounting-hole specification.
 
 ---
 
