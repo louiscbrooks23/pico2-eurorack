@@ -16,8 +16,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 // ============================================================================
-//  RP2350 MULTI-DSP  -  revision 3.2 (audio-quality pass + UI overhaul + hardware-clock fixes)
-// ============================================================================
+//  RP2350 MULTI-DSP  -  revision 3.3 (audio-quality pass + UI overhaul + hardware-clock and CV-scaling fixes)
+//
 //  What changed vs. the previous revision (short version):
 //   * Full 24-bit audio path (no more & 0xFFFF0000 truncation in or out)
 //   * Transparent output limiter instead of the 1.5x-gain cubic soft_clip
@@ -53,6 +53,10 @@
 //   * Scope timebase labels follow the true rate (5/11/22/33/49/66/87/131 ms)
 //   * PCM3060 DAC attenuation 0xF3 (-6 dB) -> 0xFF (0 dB): the output is 6 dB louder than before
 //   * Encoder: own cycle-position decoder (quarter-step total, one count per full cycle), replaces the table-driven one
+//  Rev 3.3 CV scaling (matches the schematic of LB-SYNTH-PROTO-A v0.2, see hardware/README.md):
+//   * CV inputs are inverting stages: cv_from_counts() now flips the sign (+5 V at the jack = +1) and clamps to +/-1
+//   * CV Out C and D are inverting with a +5 V offset: dac_hw_code() maps the logical 0..4095 written by the modules
+//     to 0 ... +4.9 V on those two channels (A and B unchanged, 0 ... ~8 V); cvout_cd_code_from_volts() allows bipolar use
 // ============================================================================
 #include <stdio.h>
 #include <string.h>
@@ -460,13 +464,56 @@ static float read_adc_avg(int input, int n) {
     return (float)acc / ((float)n * 4095.0f);
 }
 
-// Continuous dead-zone: no jump at the edge of the zone
+// ---------------------------------------------------------------------------------------------
+// CV input scaling (board LB-SYNTH-PROTO-A v0.2, hardware/README.md section 8.2)
+// Each CV input is an INVERTING TL074 stage: Vadc = 1.5 V - 0.3 x Vin, read by the 12-bit MCP3208
+// against a 3.0 V reference, so  counts = 2048 - 409.6 x Vin  (+5 V -> 0, 0 V -> mid, -5 V -> 4095).
+// The mid-scale point comes from a 240k resistor to the -12 V rail, so it moves with that rail
+// (about 2005 for -11.75 V, 2048 for -12.0 V). Calibrate by reading the counts with the jacks
+// unpatched (an unpatched jack is shorted to ground) and set CV_IN_MID_COUNTS to that value.
+// ---------------------------------------------------------------------------------------------
+#define CV_IN_MID_COUNTS 2048.0f
+
+// Counts -> normalised CV in [-1, +1] where +1 is +5 V at the jack (positive voltage = positive value).
+// Continuous dead-zone: no jump at the edge of the zone.
 static inline float cv_from_counts(float c) {
     const float dz = 30.0f;
-    float d = c - 2048.0f;
-    if (d > dz)  return (d - dz) / (2048.0f - dz);
-    if (d < -dz) return (d + dz) / (2048.0f - dz);
-    return 0.0f;
+    const float d = CV_IN_MID_COUNTS - c;           // inverting input stage: higher voltage -> lower count
+    float r = 0.0f;
+    if (d > dz)       r = (d - dz) / (2048.0f - dz);
+    else if (d < -dz) r = (d + dz) / (2048.0f - dz);
+    return fminf(1.0f, fmaxf(-1.0f, r));
+}
+
+// ---------------------------------------------------------------------------------------------
+// CV output scaling (hardware/README.md section 8.1)
+// The MCP4728 runs from its VDD (3.3 V) reference, so Vdac = DAC_VDD_V x code / 4096.
+//   CV Out A, B: non-inverting x2.43 stage -> 0 ... ~8.0 V, code passes straight through.
+//   CV Out C, D: inverting summing stage   -> Vout = CVOUT_CD_OFFSET_V - CVOUT_CD_GAIN x Vdac,
+//                so code 0 is about +5 V and a high code goes NEGATIVE. These two channels are mapped here
+//                so that the rest of the firmware can keep writing one convention to g_dac_out[]:
+//                0 ... 4095 = 0 V ... +CVOUT_CD_OFFSET_V (about +4.9 V).
+// CVOUT_CD_OFFSET_V is |-12V-F| x 100k/240k, about 4.9 V in practice (the -12 V rail sits a Schottky drop
+// below the bus). To calibrate: command logical 0 on channel C or D, measure the jack, and adjust this
+// value until it reads 0 V.
+// ---------------------------------------------------------------------------------------------
+#define DAC_VDD_V          3.3f
+#define CVOUT_CD_OFFSET_V  4.9f
+#define CVOUT_CD_GAIN      5.0f
+
+// Hardware code for CV Out C/D that produces `volts` at the jack (bipolar capable: about -5 ... +4.9 V is
+// the useful range; larger magnitudes clip against the op-amp's output swing). Clamped to the DAC range.
+static inline uint16_t cvout_cd_code_from_volts(float volts) {
+    const float vdac = (CVOUT_CD_OFFSET_V - volts) / CVOUT_CD_GAIN;
+    const float code = vdac * (4096.0f / DAC_VDD_V);
+    return (uint16_t)(fminf(4095.0f, fmaxf(0.0f, code + 0.5f)));
+}
+
+// Logical value written by the modules (0 ... 4095) -> code to send to the MCP4728 for that channel.
+static inline uint16_t dac_hw_code(uint8_t channel, uint16_t logical) {
+    if (logical > 4095) logical = 4095;
+    if (channel < 2) return logical;                               // A, B: unipolar pass-through
+    return cvout_cd_code_from_volts((float)logical * (CVOUT_CD_OFFSET_V / 4095.0f));   // C, D: inverted and offset
 }
 
 void update_mcp4728_channel(uint8_t channel, uint16_t value) {
@@ -615,7 +662,7 @@ static void oled_hbar(int x, int y, int w, int h, float v) {
 // 3. USER INTERFACE: VIEWS, MENUS, SCOPE / SPECTRUM
 //    (everything in this section runs on core 1 only)
 // ========================================================
-#define FW_VERSION "3.2"
+#define FW_VERSION "3.3"
 
 enum View   { VIEW_PARAMS = 0, VIEW_SCOPE, VIEW_SPECTRUM, VIEW_COMBO, NUM_VIEWS };
 enum Screen { SCR_PLAY = 0, SCR_MENU, SCR_SETTINGS, SCR_SYSTEM };
@@ -2959,7 +3006,7 @@ int main() {
             for (uint8_t ch = 0; ch < 4; ch++) {
                 uint16_t val = g_dac_out[ch].load();
                 if (val != last_dac[ch]) {
-                    update_mcp4728_channel(ch, val);
+                    update_mcp4728_channel(ch, dac_hw_code(ch, val));
                     last_dac[ch] = val;
                 }
             }

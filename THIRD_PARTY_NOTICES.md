@@ -1,6 +1,6 @@
 # Third-party notices
 
-This repository's own code is `GPL-3.0-or-later` (see `LICENSE`). It is built against, and the resulting firmware images contain code from, the following components. They are **not** copied into this repository; you obtain them when you set up the build.
+This repository's own firmware code is `GPL-3.0-or-later` (see `LICENSE`); the hardware design files in `hardware/` are `CERN-OHL-S-2.0` (see `hardware/README.md`, section 15). The firmware is built against, and the resulting firmware images contain code from, the following components. They are **not** copied into this repository; you obtain them when you set up the build.
 
 | Component | Licence | Where it comes in |
 |---|---|---|

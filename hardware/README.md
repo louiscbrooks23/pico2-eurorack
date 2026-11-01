@@ -1,9 +1,9 @@
-<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- SPDX-License-Identifier: CERN-OHL-S-2.0 -->
 <!-- Copyright (C) 2026 Louis Brooks -->
 
 # pico2-eurorack hardware
 
-Hardware design files and documentation for the **pico2-eurorack development board**: a two-board, Raspberry Pi Pico 2 (RP2350) based Eurorack-style audio and CV platform. The firmware that runs on it lives in [`../multi-dsp/`](../multi-dsp/).
+Hardware design files and documentation for the **pico2-eurorack development board**: a two-board, Raspberry Pi Pico 2 (RP2350) based Eurorack-style audio and CV platform. The firmware that runs on it lives in [`../code/multi-dsp/`](../code/multi-dsp/).
 
 This document is written for two audiences: people who want to build or modify the boards, and AI agents or developers who need exact signal paths, pin maps and electrical limits in order to write or adapt firmware. Every number below is traced to one of these sources, tagged where it matters:
 
@@ -13,7 +13,7 @@ This document is written for two audiences: people who want to build or modify t
 | **(P)** | PCB renders and PCB PDFs in `images/` and `pcb/` |
 | **(C)** | Component placement lists in `cpl/` (and BOM tables inside the PCB PDFs) |
 | **(D)** | Manufacturer datasheet (PCM3060, checked while writing) |
-| **(F)** | Firmware source in `../multi-dsp/main.cpp` |
+| **(F)** | Firmware source in `../code/multi-dsp/main.cpp` |
 | **(calc)** | Calculated here from the schematic component values, **not measured on a built board** |
 
 Section 12 lists what is still unverified and section 11 describes how the firmware (revision 3.3) maps its CV values onto this hardware. Read those before trusting a number.
@@ -59,7 +59,7 @@ Section 12 lists what is still unverified and section 11 describes how the firmw
 | UI | 0.96 in 128x64 OLED, rotary encoder with switch, 2 tact buttons |
 | Power input | Eurorack 2x5 header (CN3), +12 V and -12 V only; +5 V is made on board |
 | Analog rails | +/-12 V (through ferrite + Schottky), +5 V_A for the codec, 3.0 V reference |
-| Sample rate set by firmware | 46,875 Hz (MCLK 24 MHz = 512 x fs); see [`../multi-dsp/README.md`](../multi-dsp/README.md) section 3 |
+| Sample rate set by firmware | 46,875 Hz (MCLK 24 MHz = 512 x fs); see [`../code/multi-dsp/README.md`](../code/multi-dsp/README.md) section 3 |
 | Parts count | DSP board 161 placed items (143 SMD), control board 52 (13 SMD) **(C)** |
 
 Headline analog figures **(calc)**, with the details in sections 7 and 8:
@@ -327,7 +327,7 @@ Components are on the DSP board, schematic page 3 ([`images/sch_dsp_2_audio_io.p
 | Output full scale | Differential: **1.6 x VCC Vpp = 8 Vpp at 5 V**; single-ended 0.8 x VCC Vpp (datasheet) |
 | DAC output mode used | Differential `VOUTL+`, `VOUTL-`, `VOUTR+`, `VOUTR-` go to the output buffer; test points `TP_DACL+/-`, `TP_DACR+/-` |
 
-Register values the firmware writes are documented in [`../multi-dsp/README.md`](../multi-dsp/README.md) section 3.2 (including DAC attenuation 0 dB, de-emphasis off, differential output mode).
+Register values the firmware writes are documented in [`../code/multi-dsp/README.md`](../code/multi-dsp/README.md) section 3.2 (including DAC attenuation 0 dB, de-emphasis off, differential output mode).
 
 ### 7.2 Input buffer **(S)**
 
@@ -548,7 +548,7 @@ If the jack's switch contact behaves like the common Thonkiconn-style jack (clos
 
 ## 11. Hardware and firmware integration notes
 
-How `../multi-dsp/main.cpp` (revision 3.3) relates to the analog hardware. Revision 3.2 and earlier assumed unity-gain, non-inverting CV stages, which does not match the schematic; revision 3.3 corrects that and the host test `test_cvmap` checks the code against a model of these stages.
+How `../code/multi-dsp/main.cpp` (revision 3.3) relates to the analog hardware. Revision 3.2 and earlier assumed unity-gain, non-inverting CV stages, which does not match the schematic; revision 3.3 corrects that and the host test `test_cvmap` checks the code against a model of these stages.
 
 1. **CV Out C and D are inverted and offset; the firmware now compensates.** The modules write one logical convention to all four channels (`g_dac_out[]`, 0 to 4095). Channels A and B pass straight through (0 to about 8 V). For C and D, `dac_hw_code()` maps the logical range onto 0 to about +4.9 V, so a gate idles near 0 V and goes to about +4.9 V instead of the +5 V / negative-limit behaviour the raw code would give. For other voltages use `cvout_cd_code_from_volts(volts)` (about -5 V to +4.9 V, bipolar; not used by the current modules). Because C and D only use the lowest 0.98 V of the DAC range, they have about 1,216 codes (10.2 bits).
 2. **CV inputs invert polarity; the firmware now flips it.** `cv_from_counts()` computes `CV_IN_MID_COUNTS - counts` with a +/-30-count dead zone and clamps to -1...+1, so +5 V at the jack reads +1 and -5 V reads -1.
